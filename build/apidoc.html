@@ -1,0 +1,172 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+    >grunt-template-jasmine-istanbul (v0.5.0)</a>
+</h1>
+<h4>Code coverage template mix-in for grunt-contrib-jasmine, using istanbul</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.grunt-template-jasmine-istanbul">module grunt-template-jasmine-istanbul</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.grunt-template-jasmine-istanbul.process">
+            function <span class="apidocSignatureSpan">grunt-template-jasmine-istanbul.</span>process
+            <span class="apidocSignatureSpan">(grunt, task, context)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.grunt-template-jasmine-istanbul" id="apidoc.module.grunt-template-jasmine-istanbul">module grunt-template-jasmine-istanbul</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.grunt-template-jasmine-istanbul.process" id="apidoc.element.grunt-template-jasmine-istanbul.process">
+        function <span class="apidocSignatureSpan">grunt-template-jasmine-istanbul.</span>process
+        <span class="apidocSignatureSpan">(grunt, task, context)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">process = function (grunt, task, context) {// eslint-disable-line no-shadow
+	var outputDirectory = path.dirname(context.outfile);
+	// prepend coverage reporter
+	var tmpReporter = path.join(context.temp, TMP_REPORTER);
+	grunt.file.copy(REPORTER, tmpReporter);
+	context.scripts.reporters.unshift(getUri(path.relative(outputDirectory,
+		tmpReporter)));
+	// instrument sources
+	var files = context.options.files || &#x27;**/*&#x27;;
+	var replacements = [];
+	context.scripts.src.forEach(function (source) {
+		var instrumentedSource = path.join(outputDirectory, source);
+		if (!grunt.file.isMatch(files, instrumentedSource)) {
+			return;
+		}
+		instrumentedSource = instrument(instrumentedSource, context.temp);
+		instrumentedSource = getUri(path.relative(outputDirectory,
+				instrumentedSource));
+		replacements.push({
+			from: source,
+			to: instrumentedSource
+		});
+	});
+	// replace sources
+	if (typeof context.options.replace === &#x27;function&#x27;) {
+		replacements.forEach(function (replacement) {
+			// call replace with the original and the instrumented source paths
+			replacement.to = context.options.replace(replacement.to,
+					replacement.from);
+		});
+	}
+	if (context.options.replace !== false) {
+		// replace instrumented sources and keep uninstrumented
+		context.scripts.src = context.scripts.src.map(function (source) {
+			var instrumentedSource = null;
+			replacements.forEach(function (replacement) {
+				if (replacement.from === source) {
+					instrumentedSource = replacement.to;
+				}
+			});
+			if (instrumentedSource) {
+				return instrumentedSource;
+			}
+			return source;
+		});
+	}
+	// listen to coverage event dispatched by reporter
+	task.phantomjs.on(&#x27;jasmine.coverage&#x27;, function (coverage) {
+		var collector = new istanbul.Collector();
+		collector.add(coverage);
+		writeCoverage(coverage, context.options.coverage);
+		writeReports(collector, context.options.report);
+		if (context.options.thresholds) {
+			checkThresholds(collector, context.options.thresholds);
+		}
+	});
+	// process mixed-in template
+	return processMixedInTemplate(grunt, task, context);
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">...
+	grunt.loadNpmTasks(&#x27;grunt-contrib-yuidoc&#x27;);
+	grunt.loadNpmTasks(&#x27;gruntify-eslint&#x27;);
+
+	grunt.registerTask(&#x27;report&#x27;, &#x27;Write coverage report&#x27;, function () {
+		var istanbul = require(&#x27;istanbul&#x27;);
+		var collector = new istanbul.Collector();
+		var reporter = istanbul.Report.create(&#x27;html&#x27;, {
+			dir: grunt.config.<span class="apidocCodeKeywordSpan">process</span>(&#x27;&#x3c;%= meta.bin.coverage %&#x3e;&#x27;)
+		});
+		grunt.file.expand(grunt.config.process(&#x27;&#x3c;%= meta.bin.coverage %&#x3e;/coverage-*.json&#x27;)).forEach(function (file
+) {
+			collector.add(grunt.file.readJSON(file));
+		});
+		reporter.writeReport(collector, true);
+	});
+...</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
